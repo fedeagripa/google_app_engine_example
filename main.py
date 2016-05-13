@@ -20,6 +20,9 @@ import webapp2
 import jinja2
 
 from google.appengine.api import users
+from google.appengine.api import app_identity
+from google.appengine.api import mail
+from user import User
 
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -33,7 +36,26 @@ class MainHandler(webapp2.RequestHandler):
         loggedUser = users.get_current_user()
 
         if loggedUser:
-            self.response.write("Hello world!")
+            registeredUser = User()
+            registeredUser = registeredUser.query(User.username == loggedUser.nickname()).get()
+
+            if not registeredUser:
+
+                newUser = User()
+                newUser.username = loggedUser.nickname()
+                newUser.mail = loggedUser.email()
+
+                newUser.put()
+
+                mail.send_mail(sender = '{}@appspot.gserviceaccount.com'.format(app_identity.get_application_id()),
+                               to = loggedUser.email(),
+                               subject = "Bienvenido!",
+                               body = loggedUser.nickname() + ", bienvenido! Ha sido registrado con éxito en el sistema de chat!")
+
+
+
+            self.response.write("Hello " + loggedUser.nickname() + "!")
+
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
