@@ -47,13 +47,6 @@ class MainHandler(webapp2.RequestHandler):
 
                 newUser.put()
 
-                mail.send_mail(sender = '{}@appspot.gserviceaccount.com'.format(app_identity.get_application_id()),
-                               to = loggedUser.email(),
-                               subject = "Bienvenido!",
-                               body = loggedUser.nickname() + ", bienvenido! Ha sido registrado con éxito en el sistema de chat!")
-
-
-
             self.response.write("Hello " + loggedUser.nickname() + "!")
 
         else:
