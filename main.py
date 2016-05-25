@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import cgi
 import os
 import webapp2
@@ -36,8 +37,10 @@ class MainHandler(webapp2.RequestHandler):
         loggedUser = users.get_current_user()
 
         if loggedUser:
+
             registeredUser = User()
             registeredUser = registeredUser.query(User.username == loggedUser.nickname()).get()
+
 
             if not registeredUser:
 
@@ -47,7 +50,10 @@ class MainHandler(webapp2.RequestHandler):
 
                 newUser.put()
 
-            self.response.write("Hello " + loggedUser.nickname() + "!")
+
+            template  = JINJA_ENVIRONMENT.get_template('index.html')
+
+            self.response.write(template.render())
 
         else:
             self.redirect(users.create_login_url(self.request.uri))
