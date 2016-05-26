@@ -47,15 +47,18 @@ class MainHandler(webapp2.RequestHandler):
                 newUser = User()
                 newUser.username = loggedUser.nickname()
                 newUser.mail = loggedUser.email()
+                # newUser.contacts = []
 
                 newUser.put()
+
+                registeredUser = newUser
 
 
             template  = JINJA_ENVIRONMENT.get_template('index.html')
 
             template_values = {
-
                 'nickname' : loggedUser.nickname()
+                #'contactList' : registeredUser.contacts()
             }
 
             self.response.write(template.render(template_values))
