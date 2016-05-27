@@ -21,6 +21,7 @@ import webapp2
 import jinja2
 
 from google.appengine.api import users
+from google.appengine.api import search
 from google.appengine.api import app_identity
 from google.appengine.api import mail
 from user import User
@@ -41,6 +42,7 @@ class MainHandler(webapp2.RequestHandler):
 
             registeredUser = User()
             registeredUser = registeredUser.query(User.username == loggedUser.nickname()).get()
+
             registeredUserContacts = ContactList()
             registeredUserContacts = registeredUserContacts.query(ContactList.owner == loggedUser.nickname()).get()
 
@@ -50,31 +52,23 @@ class MainHandler(webapp2.RequestHandler):
                 newUser.username = loggedUser.nickname()
                 newUser.mail = loggedUser.email()
 
-                user1 = User()
-                user1.username = "pepito"
-                user1.mail = "asd@gmail.com"
-
                 newUserContacts = ContactList()
-                newUserContacts.contactUserList = [user1]
+                newUserContacts.list = []
                 newUserContacts.owner = newUser.username
 
                 newUser.put()
                 newUserContacts.put()
+
+                registeredUser = newUser
                 registeredUserContacts = newUserContacts
 
 
             template  = JINJA_ENVIRONMENT.get_template('index.html')
 
-            if not registeredUserContacts:
-                template_values = {
-                    'nickname': loggedUser.nickname(),
-                    'contactList': []
-                }
-            else:
-                template_values = {
-                    'nickname': loggedUser.nickname(),
-                    'contactList': registeredUserContacts.contactUserList
-                }
+            template_values = {
+                'nickname' : loggedUser.nickname(),
+                'contactList' : registeredUserContacts.list
+            }
 
             self.response.write(template.render(template_values))
 
@@ -82,6 +76,22 @@ class MainHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
 
 
+class ContactSearch(webapp2.RequestHandler):
+    def post(self):
+
+        document = search.Document(
+            fields=[
+                search.TextField(name='username'),
+                search.TextField(name='email')
+            ]
+        )
+
+        index = search.Index(name='users')
+
+
+
+
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/search', ContactSearch)
 ], debug=True)

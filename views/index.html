@@ -1,29 +1,58 @@
 <html>
 <head>
+    <title>Aplicaciones escalables en la nube</title>
+
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 </head>
 <body>
     <h1>Bienvenido, {{ nickname }}!</h1>
 
-    <h2>Mis contactos</h2>
-    <table class="table table-striped" style="width: 50%;">
-        <thead>
-          <tr>
-            <th>Nickname</th>
-          </tr>
-        </thead>
-        <tbody>
-            {% for contact in contactList %}
-                <tr>
-                    <td>
-                        {{ contact.username }}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="container">
+
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#chat">Chat</a></li>
+            <li><a data-toggle="tab" href="#search">Buscar</a></li>
+        </ul> <!-- / .nav -->
+
+        <div class="tab-content">
+            <!-- Abre pestaña de chat -->
+            <div id="chat" class="tab-pane fade in active">
+                <table class="table table-striped" style="width: 30%;">
+                    <thead><tr><td></td></tr></thead>
+                    <tbody>
+
+                    <tr><td>test</td></tr>
+                        {% for contact in contactList %}
+                            <tr>
+                                <td>
+                                    {{ contact.username }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table> <!-- / .table -->
+            </div>  <!-- / .tab-pane -->
+
+            <!-- Abre pestaña de búsqueda -->
+            <div id="search" class="tab-pane fade in">
+                <div class="container col-lg-12">
+                    <div class="form-group">
+                        <input id="user-search-bar" type="text" class="form-control" placeholder="Ejemplo: 'diego1234'">
+                    </div>
+                </div> <!-- / .container -->
+            </div> <!-- / .tab-pane -->
+        </div> <!-- / .tab-content -->
+
+    </div> <!-- / .container -->
+
+    <script>
+
+    </script>
 </body>
 </html>
