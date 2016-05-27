@@ -24,6 +24,7 @@ from google.appengine.api import users
 from google.appengine.api import app_identity
 from google.appengine.api import mail
 from user import User
+from contactList import ContactList
 
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -40,26 +41,40 @@ class MainHandler(webapp2.RequestHandler):
 
             registeredUser = User()
             registeredUser = registeredUser.query(User.username == loggedUser.nickname()).get()
-
+            registeredUserContacts = ContactList()
+            registeredUserContacts = registeredUserContacts.query(ContactList.owner == loggedUser.nickname()).get()
 
             if not registeredUser:
 
                 newUser = User()
                 newUser.username = loggedUser.nickname()
                 newUser.mail = loggedUser.email()
-                # newUser.contacts = []
+
+                user1 = User()
+                user1.username = "pepito"
+                user1.mail = "asd@gmail.com"
+
+                newUserContacts = ContactList()
+                newUserContacts.contactUserList = [user1]
+                newUserContacts.owner = newUser.username
 
                 newUser.put()
-
-                registeredUser = newUser
+                newUserContacts.put()
+                registeredUserContacts = newUserContacts
 
 
             template  = JINJA_ENVIRONMENT.get_template('index.html')
 
-            template_values = {
-                'nickname' : loggedUser.nickname()
-                #'contactList' : registeredUser.contacts()
-            }
+            if not registeredUserContacts:
+                template_values = {
+                    'nickname': loggedUser.nickname(),
+                    'contactList': []
+                }
+            else:
+                template_values = {
+                    'nickname': loggedUser.nickname(),
+                    'contactList': registeredUserContacts.contactUserList
+                }
 
             self.response.write(template.render(template_values))
 
