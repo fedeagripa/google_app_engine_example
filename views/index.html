@@ -14,13 +14,18 @@
     <div class="container">
         <h1>Bienvenido, {{ nickname }}!</h1>
         <div id="contacts" class="col-lg-3">
-            <input id="user-search-bar" type="text" class="form-control" placeholder="Ejemplo: 'diego1234'">
+            <form id="search-form">
+                <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar usuario">
+            </form>
+
+            <table id="search-results" class="table table-striped">
+                <thead><tr><td></td></tr></thead>
+                <tbody></tbody>
+            </table>
 
             <table class="table table-striped">
                 <thead><tr><td></td></tr></thead>
                 <tbody>
-
-                <tr><td>test</td></tr>
                     {% for contact in contactList %}
                         <tr>
                             <td>
@@ -33,15 +38,45 @@
         </div>
 
         <div id="chat" class="col-lg-9">
+            <div id="messages">
+
+            </div>
+
+            <form id="send-chat" method="post">
+                <input name="recipient" type="hidden" value="pepe">
+                <div class="col-lg-10">
+                    <input name="message" type="text" class="form-control">
+                </div>
+                <div class="col-lg-2">
+                    <input type="submit" class="btn btn-info" value="Enviar"/>
+                </div>
+
+            </form>
 
         </div>
 
     </div> <!-- / .container -->
 
     <script>
+        $(document).ready(function(){
 
+            $('#user-search-bar').on('input', function(){
 
+                if($(this).val()) { //controla que el input no este vacio
 
+                    $.ajax({
+                        type: "POST",
+                        url: "/search",
+                        data: $("#search-form").serialize(),
+                        success: function(data) {
+                            console.log(data)
+
+                        }
+                    });
+
+                }
+            });
+        });
     </script>
 </body>
 </html>

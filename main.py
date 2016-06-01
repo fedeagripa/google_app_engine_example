@@ -19,7 +19,9 @@ import cgi
 import os
 import webapp2
 import jinja2
+import json
 
+from datetime import datetime
 from google.appengine.api import users
 from google.appengine.api import search
 from google.appengine.api import app_identity
@@ -32,6 +34,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     loader = jinja2.FileSystemLoader('views'),
     extensions = ['jinja2.ext.autoescape'],
     autoescape = True)
+
+_INDEX_NAME = 'users'
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
@@ -59,6 +63,8 @@ class MainHandler(webapp2.RequestHandler):
                 newUser.put()
                 newUserContacts.put()
 
+                search.Index(name=_INDEX_NAME).put(CreateDocument(newUser.username,newUser.mail))
+
                 registeredUser = newUser
                 registeredUserContacts = newUserContacts
 
@@ -76,22 +82,48 @@ class MainHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
 
 
-class ContactSearch(webapp2.RequestHandler):
+#Crea documento para guardar usuarios
+def CreateDocument(nickname, email):
+
+    return search.Document(
+        fields=[search.TextField(name='nickname', value=nickname),
+                search.TextField(name='email', value=email)])
+
+
+#Devuelve usuarios que coincidan con la busqueda
+def GetUsers(query):
+
+    expr_list = [search.SortExpression(
+                    expression='nickname', default_value='',
+                    direction=search.SortExpression.DESCENDING)]
+
+    sort_opts = search.SortOptions(expressions=expr_list)
+
+    query_options = search.QueryOptions(limit= 50,sort_options=sort_opts)
+
+    query_obj = search.Query(query_string=query, options=query_options)
+
+    results = search.Index(name=_INDEX_NAME).search(query=query_obj)
+
+    return results
+
+
+class UserSearchHandler(webapp2.RequestHandler):
+
     def post(self):
+        query = self.request.get('search-text')
 
-        document = search.Document(
-            fields=[
-                search.TextField(name='username'),
-                search.TextField(name='email')
-            ]
-        )
+        results = GetUsers(query)
 
-        index = search.Index(name='users')
-
+        values = {
+            'results' : results
+        }
+        self.response.headers['Content-Type'] = "application/json"
+        self.response.write(values)
 
 
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/search', ContactSearch)
+    ('/search', UserSearchHandler)
 ], debug=True)
