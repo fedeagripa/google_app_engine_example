@@ -25,7 +25,7 @@
         <h1>{{ nickname }}</h1>
         <div id="contacts" class="col-lg-3">
             <form id="search-form">
-                <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar usuario">
+                <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar">
             </form>
 
             <table id="search-results" class="table table-striped" style="display: none">
@@ -60,7 +60,7 @@
             </div>
             <div class="col-lg-12">
                 <form id="send-chat" method="post">
-                    <input name="recipient" type="hidden" value="pepe">
+                    <input id="recipient" name="recipient" type="hidden">
                     <div class="col-lg-10">
                         <input name="message" type="text" class="form-control">
                     </div>
@@ -73,6 +73,7 @@
                 </div>
                 <form id="send-file-form" method="POST" enctype="multipart/form-data" >
                     <input id="upload" type="file" name="file" style="visibility: hidden;">
+                    <input id="file-recipient" type="hidden" name="file-recipient">
                 </form>
             </div>
 
@@ -185,6 +186,16 @@
 
                     }
                 });
+            });
+
+            //Click en un contacto para comenzar a chatear
+            $('#contacts-table tr').click(function(){
+
+                var recipient = $(this).children().text().trim();
+
+                $('#file-recipient').val(recipient);
+                $('#recipient').val(recipient);
+
             });
         });
 
