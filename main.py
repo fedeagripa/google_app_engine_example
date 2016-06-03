@@ -24,10 +24,14 @@ import json
 from datetime import datetime
 from google.appengine.api import users
 from google.appengine.api import search
+from google.appengine.ext import blobstore
+from google.appengine.ext import ndb
+from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.api import app_identity
 from google.appengine.api import mail
 from user import User
 from contactList import ContactList
+from blob import UserFile
 
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -121,9 +125,32 @@ class UserSearchHandler(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = "application/json"
         self.response.write(values)
 
+#Obtiene url para subir blob y lo envia a la vista
+class FileUploadFormHandler(webapp2.RequestHandler):
+
+    def get(self):
+        upload_url = blobstore.create_upload_url('/upload_file')
+
+        self.response.write(upload_url)
+
+#Recibe el blob, lo guarda y responde okay
+class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
+
+    def post(self):
+            form = cgi.FieldStorage()
+            #upload = self.get_uploads()[0]
+            upload = form.getvalue('image')
+            user_photo = UserFile(
+                owner=users.get_current_user().nickname(),
+                blob_key=form.getvalue('blobkey'))
+            user_photo.put()
+
+            self.response.write('okay')
 
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/search', UserSearchHandler)
+    ('/search', UserSearchHandler),
+    ('/upload_file', FileUploadHandler),
+    ('/upload_file_form', FileUploadFormHandler)
 ], debug=True)
