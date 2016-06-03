@@ -22,19 +22,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>Bienvenido, {{ nickname }}!</h1>
+        <h1>{{ nickname }}</h1>
         <div id="contacts" class="col-lg-3">
             <form id="search-form">
                 <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar usuario">
             </form>
 
-            <table id="search-results" class="table table-striped">
-                <thead><tr><td></td></tr></thead>
+            <table id="search-results" class="table table-striped" style="display: none">
                 <tbody></tbody>
             </table>
 
             <table class="table table-striped">
-                <thead><tr><td></td></tr></thead>
                 <tbody>
                     {% for contact in contactList %}
                         <tr>
@@ -89,21 +87,39 @@
 
             $('#user-search-bar').on('input', function(){
 
-                if($(this).val()) { //controla que el input no este vacio
+                if($.trim($(this).val()) != '') { //controla que el input no este vacio
 
                     $.ajax({
                         type: "POST",
                         url: "/search",
                         data: $("#search-form").serialize(),
                         success: function(data) {
-                            console.log(data)
 
+                            $('#search-results').find('tbody').empty();
+
+                            var results = JSON.parse(data);
+
+                            if(results.length > 0) {
+
+                                $('#search-results').show();
+
+                                for(i=0; i< results.length; i++){
+                                    addContactToTable(results[i].nickname, results[i].mail)
+                                }
+                            }
+                            else {
+                                $('#search-results').hide();
+                            }
                         }
                     });
-
+                }
+                else {
+                    $('#search-results').find('tbody').empty();
+                    $('#search-results').hide();
                 }
             });
 
+            //Obtiene la blobkey para subir el archivo
             $('#send-file').click(function(){
 
                 $.ajax({
@@ -120,6 +136,8 @@
 
             });
 
+
+            //Sube el archivo
             $('#upload:file').change(function(){
 
                 var upload_url = $('#send-file-form').attr('action');
@@ -127,9 +145,6 @@
                 var formData = new FormData();
                 formData.append('image', ($('#upload'))[0].files[0]);
                 formData.append('blobkey', upload_url);
-
-                console.log(formData);
-
 
                 $.ajax({
                     type: "POST",
@@ -139,11 +154,54 @@
                     processData: false,
                     data: formData,
                     success: function(data) {
-                        alert(data);
+                        console.log(data);
+                    }
+                });
+            });
+
+            //Escucha cuando se clickea el agregar usuario
+            $('#search-results').delegate('a','click', function () {
+
+                var nickname = $(this).attr('nickname');
+
+                $.ajax({
+                    type: "POST",
+                    url:'/add_contact',
+                    data: {
+                        nickname: nickname
+                    },
+                    success: function(data){
+
+                        addContactToTable(nickname,data);
+
+
                     }
                 });
             });
         });
+
+        function addContactToTable(nickname, mail) {
+
+            $('#search-results').find('tbody')
+                                .append($('<tr>')
+                                        .attr('mail', mail)
+                                        .append($('<td>')
+                                                .text(nickname)
+                                        )
+                                        .append($('<td>')
+                                                .append($('<a>')
+                                                        .attr('nickname', nickname)
+                                                        .addClass('add-contact')
+                                                        .append($('<span>')
+                                                                .addClass('glyphicon glyphicon-plus')
+                                                                .attr('aria-hidden','true')
+                                                        )
+                                                )
+                                        )
+                                );
+
+        }
+
     </script>
 </body>
 </html>

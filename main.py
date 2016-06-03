@@ -119,11 +119,49 @@ class UserSearchHandler(webapp2.RequestHandler):
 
         results = GetUsers(query)
 
+        loggedUser = users.get_current_user()
+
+        contactlist = ContactList()
+        contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
+
+
+        results_json = []
+
+        for match in results:
+
+            val = {'nickname' : match.field('nickname').value,
+                   'mail' : match.field('email').value}
+
+            results_json.append(val)
+
         values = {
-            'results' : results
+            'results' : results_json
         }
-        self.response.headers['Content-Type'] = "application/json"
-        self.response.write(values)
+
+        self.response.write(json.dumps(results_json, self.response.out))
+
+#Agrega un usuario
+class AddUserHandler(webapp2.RequestHandler):
+    def post(self):
+
+        nickname = self.request.get('nickname')
+
+        newcontact = User()
+        newcontact = newcontact.query(User.username == nickname).get()
+
+        print "mail: " + newcontact.mail
+
+        loggedUser = users.get_current_user()
+
+        contactlist = ContactList()
+        contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
+
+        contactlist.list.append(newcontact)
+
+        contactlist.put()
+
+        self.response.write(newcontact.mail)
+
 
 #Obtiene url para subir blob y lo envia a la vista
 class FileUploadFormHandler(webapp2.RequestHandler):
@@ -138,7 +176,6 @@ class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
             form = cgi.FieldStorage()
-            #upload = self.get_uploads()[0]
             upload = form.getvalue('image')
             user_photo = UserFile(
                 owner=users.get_current_user().nickname(),
@@ -152,5 +189,6 @@ app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/search', UserSearchHandler),
     ('/upload_file', FileUploadHandler),
-    ('/upload_file_form', FileUploadFormHandler)
+    ('/upload_file_form', FileUploadFormHandler),
+    ('/add_contact', AddUserHandler)
 ], debug=True)
