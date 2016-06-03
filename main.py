@@ -149,8 +149,6 @@ class AddUserHandler(webapp2.RequestHandler):
         newcontact = User()
         newcontact = newcontact.query(User.username == nickname).get()
 
-        print "mail: " + newcontact.mail
-
         loggedUser = users.get_current_user()
 
         contactlist = ContactList()
