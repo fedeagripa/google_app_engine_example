@@ -22,13 +22,20 @@ import jinja2
 import json
 
 from datetime import datetime
+
 from google.appengine.api import users
-from google.appengine.api import search
-from google.appengine.ext import blobstore
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import blobstore_handlers
-from google.appengine.api import app_identity
 from google.appengine.api import mail
+from google.appengine.api import search
+
+from google.appengine.ext import blobstore
+from google.appengine.ext.webapp import blobstore_handlers
+
+from google.appengine.api import xmpp
+from google.appengine.ext.webapp import xmpp_handlers
+
+from google.appengine.api import app_identity
+
+#Modelos
 from user import User
 from contactList import ContactList
 from blob import UserFile
@@ -39,7 +46,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions = ['jinja2.ext.autoescape'],
     autoescape = True)
 
-_INDEX_NAME = 'users'
+USERS_INDEX_NAME = 'users'
+MESSAGES_INDEX_NAME = 'messages'
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
@@ -67,10 +75,12 @@ class MainHandler(webapp2.RequestHandler):
                 newUser.put()
                 newUserContacts.put()
 
-                search.Index(name=_INDEX_NAME).put(CreateDocument(newUser.username,newUser.mail))
+                search.Index(name=USERS_INDEX_NAME).put(CreateDocument(newUser.username,newUser.mail))
 
                 registeredUser = newUser
                 registeredUserContacts = newUserContacts
+
+                SendWelcomeEmail(loggedUser.email())
 
 
             template  = JINJA_ENVIRONMENT.get_template('index.html')
@@ -85,6 +95,10 @@ class MainHandler(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
+
+def SendWelcomeEmail(address):
+
+    mail.send_mail('aplicacionesescalables@gmail.com',address,'Bienvenido','Ha sido registrado en la aplicacion de chat con exito, bienvenido!')
 
 #Crea documento para guardar usuarios
 def CreateDocument(nickname, email):
@@ -107,7 +121,7 @@ def GetUsers(query):
 
     query_obj = search.Query(query_string=query, options=query_options)
 
-    results = search.Index(name=_INDEX_NAME).search(query=query_obj)
+    results = search.Index(name=USERS_INDEX_NAME).search(query=query_obj)
 
     return results
 
@@ -123,7 +137,6 @@ class UserSearchHandler(webapp2.RequestHandler):
 
         contactlist = ContactList()
         contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
-
 
         results_json = []
 
@@ -173,14 +186,36 @@ class FileUploadFormHandler(webapp2.RequestHandler):
 class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
-            form = cgi.FieldStorage()
-            upload = form.getvalue('image')
-            user_photo = UserFile(
-                owner=users.get_current_user().nickname(),
-                blob_key=form.getvalue('blobkey'))
-            user_photo.put()
+        form = cgi.FieldStorage()
+        upload = form.getvalue('image')
+        user_photo = UserFile(
+            owner=users.get_current_user().nickname(),
+            blob_key=form.getvalue('blobkey'))
+        user_photo.put()
 
-            self.response.write('okay')
+        self.response.write('okay')
+
+#Manda mensaje de chat
+class SendMessageHandler(webapp2.RequestHandler):
+
+    def post(self):
+
+        recipientNickname = self.request.get('recipient')
+
+        recipient = User()
+        recipient = recipient.query(User.username == recipientNickname).get()
+
+        sender = users.get_current_user().email()
+
+
+
+
+
+
+
+
+
+
 
 
 app = webapp2.WSGIApplication([
@@ -188,5 +223,6 @@ app = webapp2.WSGIApplication([
     ('/search', UserSearchHandler),
     ('/upload_file', FileUploadHandler),
     ('/upload_file_form', FileUploadFormHandler),
-    ('/add_contact', AddUserHandler)
+    ('/add_contact', AddUserHandler),
+    ('/send_message', SendMessageHandler)
 ], debug=True)

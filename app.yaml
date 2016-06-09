@@ -12,6 +12,15 @@ handlers:
 - url: .*
   script: main.app
 
+- url: /tasks/backup
+  script: backup.py
+
+inbound_services:
+- xmpp_message
+- xmpp_presence
+- xmpp_subscribe
+- xmpp_error
+
 libraries:
 - name: webapp2
   version: "2.5.2"
