@@ -10,6 +10,8 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
+    <script src='/_ah/channel/jsapi'></script>
+
     <style>
         .chat-window{
             border-radius: 4px;
@@ -221,50 +223,46 @@
 
         }
 
-        //channel api
-        // [START open_socket]
-      sendMessage = function(path, opt_param) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', path, true);
-        xhr.send();
-      };
-
-      onOpened = function() {
-        sendMessage('/opened');
-      };
-    // [END open_socket]
-
-    onMessage = function(m) {
-        updateChat();
-      };
-
-    updateGame = function() {
-        //aca se recarga para los mensajes
-        }
-
-     openChannel = function() {
-        var token = '{{ token }}';
-// [START create_channel_2]
-        var channel = new goog.appengine.Channel('{{ token }}');
-        var handler = {
-          'onopen': onOpened,
-          'onmessage': onMessage,
-          'onerror': function() {},
-          'onclose': function() {}
+        sendMessage = function(path, opt_param) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', path, true);
+            xhr.send();
         };
-        var socket = channel.open(handler);
-// [END create_channel_2]
-        // socket.onopen = onOpened;
-        // socket.onmessage = onMessage;
-      };
 
-      initialize = function() {
-        openChannel();
+        onOpened = function() {
+            //sendMessage('/opened');
+        };
 
-        onMessage({data: '{{ initial_message }}'});
-      };
+        onMessage = function(m) {
+            if(m.data != ""){
+//                var data = JSON.parse(m.data);
+//
+//                alert('chupate esa ' + data.fruta);
+            }
 
-      setTimeout(initialize, 100);
+            //updateChat();
+        };
+
+        openChannel = function() {
+            var token = '{{ token }}';
+            var channel = new goog.appengine.Channel('{{ token }}');
+            var handler = {
+              'onopen': onOpened,
+              'onmessage': onMessage,
+              'onerror': function() {},
+              'onclose': function() {}
+            };
+            var socket = channel.open(handler);
+
+        };
+
+        initialize = function() {
+            openChannel();
+
+            onMessage({data: '{{ initial_message }}'});
+        };
+
+        setTimeout(initialize, 100);
 
     </script>
 </body>

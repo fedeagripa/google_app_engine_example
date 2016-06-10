@@ -154,6 +154,12 @@ class UserSearchHandler(webapp2.RequestHandler):
             'results' : results_json
         }
 
+        # test = {
+        #     'fruta' : 'mandarina'
+        # }
+        #
+        # channel.send_message(loggedUser.nickname(),json.dumps(test));
+
         self.response.write(json.dumps(results_json, self.response.out))
 
 #Agrega un usuario
@@ -209,16 +215,6 @@ class SendMessageHandler(webapp2.RequestHandler):
         recipient = recipient.query(User.username == recipientNickname).get()
 
         sender = users.get_current_user().email()
-
-
-
-
-
-
-
-
-
-
 
 
 app = webapp2.WSGIApplication([
