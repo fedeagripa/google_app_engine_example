@@ -39,6 +39,7 @@ from google.appengine.api import app_identity
 from user import User
 from contactList import ContactList
 from blob import UserFile
+from google.appengine.api import channel
 
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -82,12 +83,14 @@ class MainHandler(webapp2.RequestHandler):
 
                 SendWelcomeEmail(loggedUser.email())
 
+            token = channel.create_channel(loggedUser.nickname())
 
             template  = JINJA_ENVIRONMENT.get_template('index.html')
 
             template_values = {
                 'nickname' : loggedUser.nickname(),
-                'contactList' : registeredUserContacts.list
+                'contactList' : registeredUserContacts.list,
+                'token': token
             }
 
             self.response.write(template.render(template_values))

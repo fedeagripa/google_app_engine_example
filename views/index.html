@@ -221,6 +221,51 @@
 
         }
 
+        //channel api
+        // [START open_socket]
+      sendMessage = function(path, opt_param) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', path, true);
+        xhr.send();
+      };
+
+      onOpened = function() {
+        sendMessage('/opened');
+      };
+    // [END open_socket]
+
+    onMessage = function(m) {
+        updateChat();
+      };
+
+    updateGame = function() {
+        //aca se recarga para los mensajes
+        }
+
+     openChannel = function() {
+        var token = '{{ token }}';
+// [START create_channel_2]
+        var channel = new goog.appengine.Channel('{{ token }}');
+        var handler = {
+          'onopen': onOpened,
+          'onmessage': onMessage,
+          'onerror': function() {},
+          'onclose': function() {}
+        };
+        var socket = channel.open(handler);
+// [END create_channel_2]
+        // socket.onopen = onOpened;
+        // socket.onmessage = onMessage;
+      };
+
+      initialize = function() {
+        openChannel();
+
+        onMessage({data: '{{ initial_message }}'});
+      };
+
+      setTimeout(initialize, 100);
+
     </script>
 </body>
 </html>
