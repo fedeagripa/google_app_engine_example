@@ -1,4 +1,4 @@
 cron:
 - description: daily blobstore backup
-  url: /tasks/backup
+  url: /tasks
   schedule: every 24 hours

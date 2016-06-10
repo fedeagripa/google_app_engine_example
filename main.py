@@ -195,11 +195,11 @@ class FileUploadFormHandler(webapp2.RequestHandler):
 class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
-        form = cgi.FieldStorage()
-        upload = form.getvalue('image')
+        upload = self.get_uploads()[0]
+        print upload.key()
         user_photo = UserFile(
             owner=users.get_current_user().nickname(),
-            blob_key=form.getvalue('blobkey'))
+            blob_key=upload.key())
         user_photo.put()
 
         self.response.write('okay')
