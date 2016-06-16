@@ -30,9 +30,6 @@ from google.appengine.api import search
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
-from google.appengine.api import xmpp
-from google.appengine.ext.webapp import xmpp_handlers
-
 from google.appengine.api import app_identity
 
 #Modelos
@@ -76,7 +73,7 @@ class MainHandler(webapp2.RequestHandler):
                 newUser.put()
                 newUserContacts.put()
 
-                search.Index(name=USERS_INDEX_NAME).put(CreateDocument(newUser.username,newUser.mail))
+                search.Index(name=USERS_INDEX_NAME).put(CreateUserDocument(newUser.username,newUser.mail))
 
                 registeredUser = newUser
                 registeredUserContacts = newUserContacts
@@ -104,11 +101,20 @@ def SendWelcomeEmail(address):
     mail.send_mail('aplicacionesescalables@gmail.com',address,'Bienvenido','Ha sido registrado en la aplicacion de chat con exito, bienvenido!')
 
 #Crea documento para guardar usuarios
-def CreateDocument(nickname, email):
+def CreateUserDocument(nickname, email):
 
     return search.Document(
         fields=[search.TextField(name='nickname', value=nickname),
                 search.TextField(name='email', value=email)])
+
+#Crea documento para guardar usuarios
+def CreateMessageDocument(sender, receiver, message):
+
+    return search.Document(
+        fields=[search.TextField(name='sender', value=sender),
+                search.TextField(name='receiver', value=receiver),
+                search.TextField(name='message', value=message),
+                search.DateField(name='timestamp', value=datetime.now())])
 
 
 #Devuelve usuarios que coincidan con la busqueda
@@ -153,12 +159,6 @@ class UserSearchHandler(webapp2.RequestHandler):
         values = {
             'results' : results_json
         }
-
-        # test = {
-        #     'fruta' : 'mandarina'
-        # }
-        #
-        # channel.send_message(loggedUser.nickname(),json.dumps(test));
 
         self.response.write(json.dumps(results_json, self.response.out))
 
@@ -209,12 +209,64 @@ class SendMessageHandler(webapp2.RequestHandler):
 
     def post(self):
 
-        recipientNickname = self.request.get('recipient')
+        sender = users.get_current_user().nickname()
+        receiver = self.request.get('receiver')
+        message = self.request.get('message')
 
-        recipient = User()
-        recipient = recipient.query(User.username == recipientNickname).get()
+        search.Index(name=MESSAGES_INDEX_NAME).put(CreateUserDocument(sender,receiver,message))
 
-        sender = users.get_current_user().email()
+        try:
+            newMessage = {
+                'sender' : sender,
+                'message' : message
+            }
+
+            channel.send_message(receiver, json.dumps(newMessage))
+        except:
+            pass
+
+
+#Obtiene los mensajes intercambiados entre dos usuarios
+class GetMessagesHandler(webapp2.RequestHandler):
+    def post(self):
+
+        userOne = self.request.get('nickname')
+        userTwo = users.get_current_user().nickname()
+
+        messages = GetMessages(userOne,userTwo)
+
+        messages_json = []
+
+        for match in messages:
+
+            val = {'sender' : match.field('sender').value,
+                   'receiver' : match.field('receiver').value,
+                   'message' : match.field('message').value }
+
+            messages_json.append(val)
+
+        values = {
+            'messages' : messages_json
+        }
+
+        self.response.write(json.dumps(messages_json, self.response.out))
+
+
+def GetMessages(sender, receiver):
+
+    expr_list = [search.SortExpression(
+                    expression='timestamp', default_value='',
+                    direction=search.SortExpression.DESCENDING)]
+
+    sort_opts = search.SortOptions(expressions=expr_list)
+
+    query_options = search.QueryOptions(limit= 10,sort_options=sort_opts)
+
+    query_obj = search.Query(query_string=sender + ' ' +receiver, options=query_options)
+
+    results = search.Index(name=MESSAGES_INDEX_NAME).search(query=query_obj)
+
+    return results
 
 
 app = webapp2.WSGIApplication([
@@ -223,5 +275,6 @@ app = webapp2.WSGIApplication([
     ('/upload_file', FileUploadHandler),
     ('/upload_file_form', FileUploadFormHandler),
     ('/add_contact', AddUserHandler),
-    ('/send_message', SendMessageHandler)
+    ('/send_message', SendMessageHandler),
+    ('/get_messages', GetMessagesHandler)
 ], debug=True)

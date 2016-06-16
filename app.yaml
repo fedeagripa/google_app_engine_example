@@ -12,11 +12,8 @@ handlers:
 - url: .*
   script: main.app
 
-inbound_services:
-- xmpp_message
-- xmpp_presence
-- xmpp_subscribe
-- xmpp_error
+- url: /tasks
+  script: tasks.backup.app
 
 libraries:
 - name: webapp2

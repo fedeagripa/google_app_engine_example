@@ -8,7 +8,13 @@ from blob import UserFile
 class MainHandler(webapp2.RequestHandler):
     def get(self):
 
-        photos = UserFile()
+        photos = UserFile().query().get()
 
+        print photos
+
+
+app = webapp2.WSGIApplication([
+    ('/', MainHandler)
+], debug=True)
 
 

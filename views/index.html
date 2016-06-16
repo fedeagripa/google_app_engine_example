@@ -62,7 +62,7 @@
             </div>
             <div class="col-lg-12">
                 <form id="send-chat" method="post">
-                    <input id="recipient" name="recipient" type="hidden">
+                    <input id="receiver" name="receiver" type="hidden">
                     <div class="col-lg-10">
                         <input name="message" type="text" class="form-control">
                     </div>
@@ -75,7 +75,7 @@
                 </div>
                 <form id="send-file-form" method="POST" enctype="multipart/form-data" >
                     <input id="upload" type="file" name="file" style="visibility: hidden;">
-                    <input id="file-recipient" type="hidden" name="file-recipient">
+                    <input id="file-receiver" type="hidden" name="file-receiver">
                 </form>
             </div>
 
@@ -193,10 +193,23 @@
             //Click en un contacto para comenzar a chatear
             $('#contacts-table tr').click(function(){
 
-                var recipient = $(this).children().text().trim();
+                var receiver = $(this).children().text().trim();
 
-                $('#file-recipient').val(recipient);
-                $('#recipient').val(recipient);
+                $('#file-receiver').val(receiver);
+                $('#receiver').val(receiver);
+
+                $.ajax({
+                    type: "POST",
+                    url:'/get_messages',
+                    data: {
+                        nickname: receiver
+                    },
+                    success: function(data){
+
+                        var messages = JSON.parse(data);
+
+                    }
+                });
 
             });
         });
@@ -236,10 +249,9 @@
         onMessage = function(m) {
 
             var data = JSON.parse(m.data);
-            alert('chupate esa ' + data.fruta);
 
+            $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
 
-            //updateChat();
         };
 
         openChannel = function() {
