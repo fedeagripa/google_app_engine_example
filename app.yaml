@@ -12,9 +12,6 @@ handlers:
 - url: .*
   script: main.app
 
-- url: /tasks
-  script: tasks.backup.app
-
 libraries:
 - name: webapp2
   version: "2.5.2"

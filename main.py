@@ -78,7 +78,7 @@ class MainHandler(webapp2.RequestHandler):
                 registeredUser = newUser
                 registeredUserContacts = newUserContacts
 
-                SendWelcomeEmail(loggedUser.email())
+                #SendWelcomeEmail(loggedUser.email())
 
             token = channel.create_channel(loggedUser.nickname())
 
@@ -166,21 +166,30 @@ class UserSearchHandler(webapp2.RequestHandler):
 class AddUserHandler(webapp2.RequestHandler):
     def post(self):
 
-        nickname = self.request.get('nickname')
+        inviter = users.get_current_user().nickname()
+        invited = self.request.get('nickname')
 
-        newcontact = User()
-        newcontact = newcontact.query(User.username == nickname).get()
+        AddContact(inviter,invited)
+        AddContact(invited,inviter)
 
-        loggedUser = users.get_current_user()
+        invitedUser = User()
+        invitedUser = invitedUser.query(User.username == invited).get()
 
-        contactlist = ContactList()
-        contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
+        self.response.write(invitedUser.mail)
 
-        contactlist.list.append(newcontact)
 
-        contactlist.put()
+def AddContact(user1, user2):
 
-        self.response.write(newcontact.mail)
+    userOne = User()
+    userOne= userOne.query(User.username == user1).get()
+
+    userTwoContactList = ContactList()
+    userTwoContactList = userTwoContactList.query(ContactList.owner == user2).get()
+
+    userTwoContactList.list.append(userOne)
+
+    userTwoContactList.put()
+
 
 
 #Obtiene url para subir blob y lo envia a la vista
@@ -213,7 +222,10 @@ class SendMessageHandler(webapp2.RequestHandler):
         receiver = self.request.get('receiver')
         message = self.request.get('message')
 
-        search.Index(name=MESSAGES_INDEX_NAME).put(CreateUserDocument(sender,receiver,message))
+        print "receiver: " + receiver
+        print "message: " + message
+
+        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message))
 
         try:
             newMessage = {
@@ -221,9 +233,15 @@ class SendMessageHandler(webapp2.RequestHandler):
                 'message' : message
             }
 
+            print newMessage
+
             channel.send_message(receiver, json.dumps(newMessage))
         except:
+
+            print "excepcion"
             pass
+
+        self.response.write('okay')
 
 
 #Obtiene los mensajes intercambiados entre dos usuarios
@@ -269,6 +287,13 @@ def GetMessages(sender, receiver):
     return results
 
 
+class CronJobHandler(webapp2.RequestHandler):
+    def get(self):
+        print "llega al cron"
+        # photos = UserFile().query().get()
+        #
+        # print photos
+
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/search', UserSearchHandler),
@@ -276,5 +301,6 @@ app = webapp2.WSGIApplication([
     ('/upload_file_form', FileUploadFormHandler),
     ('/add_contact', AddUserHandler),
     ('/send_message', SendMessageHandler),
-    ('/get_messages', GetMessagesHandler)
+    ('/get_messages', GetMessagesHandler),
+    ('/tasks',CronJobHandler)
 ], debug=True)
