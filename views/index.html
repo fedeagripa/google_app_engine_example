@@ -19,6 +19,7 @@
             height: 400px;
             margin-top:10px;
             margin-bottom:10px;
+            overflow:scroll;
         }
     </style>
 </head>
@@ -253,6 +254,7 @@
                     $('#message').val('');
 
                     $('#messages').append($('<p>').text('Yo: ' + message));
+                    $("#messages").scrollTop($("#messages")[0].scrollHeight);
 
                     var receiver = $('#receiver').val();
 
