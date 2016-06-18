@@ -87,7 +87,8 @@ class MainHandler(webapp2.RequestHandler):
             template_values = {
                 'nickname' : loggedUser.nickname(),
                 'contactList' : registeredUserContacts.list,
-                'token': token
+                'token': token,
+                'logouturl' : users.create_logout_url(self.request.uri)
             }
 
             self.response.write(template.render(template_values))

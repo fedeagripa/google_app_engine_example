@@ -24,6 +24,7 @@
 </head>
 <body>
     <div class="container">
+        <a style="float: right;" href="{{ logouturl }}">Salir</a>
         <h1>{{ nickname }}</h1>
         <div id="contacts" class="col-lg-3">
             <form id="search-form">
@@ -38,7 +39,7 @@
                 <tbody>
                     {% for contact in contactList %}
                         <tr>
-                            <td>
+                            <td id="{{ contact.username }}">
                                 {{ contact.username }}
                             </td>
                         </tr>
@@ -204,6 +205,7 @@
                 $('#menu-opciones').prop('disabled', false);
 
                 $('#messages').empty();
+                $(this).find('span.badge').remove();
 
                 $.ajax({
                     type: "POST",
@@ -296,8 +298,36 @@
 
             var data = JSON.parse(m.data);
 
-            $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
+            var activeUser = $('#receiver').val();
 
+            console.log("********************************")
+            console.log("Esto es una prueba")
+
+            console.log("Usuario activo es " + activeUser);
+            console.log("Quien envió el mensaje que llega por el channel es " + data.sender);
+            console.log("********************************")
+
+            if(activeUser == data.sender){
+
+                console.log("Entra al if");
+                $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
+
+            }
+            else {
+
+                console.log("Entra al else");
+
+                if($('#' + data.sender).find('span.badge').length !=0){
+                    console.log("Entra al if del else");
+                    var count = parseInt($('#' + data.sender).find('span.badge').text());
+                    count++;
+                    $('#' + data.sender).find('span.badge').text(count);
+                }
+                else {
+                    console.log("Entra al else del else");
+                    $('#' + data.sender).append($('<span>').addClass('badge').css('float','right').text('1'));
+                }
+            }
         };
 
         openChannel = function() {
