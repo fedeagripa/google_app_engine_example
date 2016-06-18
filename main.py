@@ -38,6 +38,7 @@ from contactList import ContactList
 from blob import UserFile
 from google.appengine.api import channel
 
+
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader = jinja2.FileSystemLoader('views'),
@@ -275,12 +276,18 @@ class GetMessagesHandler(webapp2.RequestHandler):
 
 def GetMessages(sender, receiver):
 
-    expr_list = [search.SortExpression(
+    expr_list = [
+        search.SortExpression(
+            expression='timestamp', default_value=datetime.min,
+            direction=search.SortExpression.ASCENDING),
+        search.SortExpression(
                     expression='sender', default_value='',
-                    direction=search.SortExpression.DESCENDING),
-                    search.SortExpression(
+                    direction=search.SortExpression.ASCENDING),
+        search.SortExpression(
                     expression='receiver', default_value='',
-                    direction=search.SortExpression.DESCENDING)]
+                    direction=search.SortExpression.ASCENDING)
+
+                    ]
 
     sort_opts = search.SortOptions(expressions=expr_list)
 
