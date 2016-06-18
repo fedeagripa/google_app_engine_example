@@ -244,7 +244,7 @@ class SendMessageHandler(webapp2.RequestHandler):
 
             print newMessage
 
-            channel.send_message(receiver, json.dumps(newMessage))
+            SendMessage(receiver, json.dumps(newMessage))
         except:
 
             print "excepcion"
@@ -252,6 +252,10 @@ class SendMessageHandler(webapp2.RequestHandler):
 
         self.response.write('okay')
 
+
+def SendMessage(receiver, message):
+
+    channel.send_message(receiver, message)
 
 #Obtiene los mensajes intercambiados entre dos usuarios
 class GetMessagesHandler(webapp2.RequestHandler):

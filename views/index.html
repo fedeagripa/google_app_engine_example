@@ -39,7 +39,7 @@
                 <tbody>
                     {% for contact in contactList %}
                         <tr class="clickable-row">
-                            <td>
+                            <td id="{{ contact.username }}">
                                 {{ contact.username }}
                             </td>
                         </tr>
@@ -210,9 +210,6 @@
                 $('#send-message').prop('disabled', false);
                 $('#menu-opciones').prop('disabled', false);
 
-                $('#messages').empty();
-                $(this).find('span.badge').remove();
-
                 $.ajax({
                     type: "POST",
                     url:'/get_messages',
@@ -226,6 +223,9 @@
                         console.log(messages);
 
                         if(messages.length > 0) {
+
+                            $('#messages').empty();
+                            $('#' + receiver).find('span.badge').remove();
 
                             for(i=0; i< messages.length; i++){
 
@@ -323,7 +323,7 @@
 
                 console.log("Entra al else");
 
-                if($('#' + data.sender).find('span.badge').length !=0){
+                if($('#' + data.sender).find('span.badge').length != 0){
                     console.log("Entra al if del else");
                     var count = parseInt($('#' + data.sender).find('span.badge').text());
                     count++;
