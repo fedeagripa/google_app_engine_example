@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import cgi
 import os
 import webapp2
 import jinja2
 import json
+
 
 from datetime import datetime
 
@@ -31,6 +31,8 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
 from google.appengine.api import app_identity
+from google.appengine.ext import vendor
+vendor.add('libs')
 
 #Modelos
 from user import User
@@ -38,6 +40,7 @@ from contactList import ContactList
 from blob import UserFile
 from google.appengine.api import channel
 
+import dicttoxml
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader = jinja2.FileSystemLoader('views'),
@@ -159,11 +162,13 @@ class UserSearchHandler(webapp2.RequestHandler):
 
                 results_json.append(val)
 
+            xml = dicttoxml.dicttoxml(results_json)
             values = {
-                'results' : results_json
+                #'results' : results_json
+                'results' : xml
             }
 
-            self.response.write(json.dumps(results_json, self.response.out))
+            self.response.write(results_json, self.response.out)
 
 #Agrega un usuario
 class AddUserHandler(webapp2.RequestHandler):
@@ -276,12 +281,18 @@ class GetMessagesHandler(webapp2.RequestHandler):
 
 def GetMessages(sender, receiver):
 
-    expr_list = [search.SortExpression(
+    expr_list = [
+        search.SortExpression(
+            expression='timestamp', default_value=datetime.min,
+            direction=search.SortExpression.ASCENDING),
+        search.SortExpression(
                     expression='sender', default_value='',
-                    direction=search.SortExpression.DESCENDING),
-                    search.SortExpression(
+                    direction=search.SortExpression.ASCENDING),
+        search.SortExpression(
                     expression='receiver', default_value='',
-                    direction=search.SortExpression.DESCENDING)]
+                    direction=search.SortExpression.ASCENDING)
+
+                    ]
 
     sort_opts = search.SortOptions(expressions=expr_list)
 
