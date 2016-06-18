@@ -284,7 +284,7 @@ def GetMessages(sender, receiver):
     expr_list = [
         search.SortExpression(
             expression='timestamp', default_value=datetime.min,
-            direction=search.SortExpression.ASCENDING),
+            direction=search.SortExpression.DESCENDING),
         search.SortExpression(
                     expression='sender', default_value='',
                     direction=search.SortExpression.ASCENDING),
