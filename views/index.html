@@ -142,7 +142,6 @@
 
             });
 
-
             //Sube el archivo
             $('#upload:file').change(function(){
 
@@ -213,6 +212,21 @@
                     success: function(data){
 
                         var messages = JSON.parse(data);
+
+                        console.log(messages);
+
+                        if(messages.length > 0) {
+
+                            for(i=0; i< messages.length; i++){
+
+                                if(messages[i].sender == receiver){
+                                    $('#messages').append($('<p>').text(messages[i].sender + ': ' + messages[i].message));
+                                }
+                                else {
+                                    $('#messages').append($('<p>').text('Yo: ' + messages[i].message));
+                                }
+                            }
+                        }
 
                     }
                 });

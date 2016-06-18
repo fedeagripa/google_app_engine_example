@@ -140,27 +140,29 @@ class UserSearchHandler(webapp2.RequestHandler):
     def post(self):
         query = self.request.get('search-text')
 
-        results = GetUsers(query)
-
         loggedUser = users.get_current_user()
 
-        contactlist = ContactList()
-        contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
+        if loggedUser != query :
 
-        results_json = []
+            results = GetUsers(query)
 
-        for match in results:
+            contactlist = ContactList()
+            contactlist = contactlist.query(ContactList.owner == loggedUser.nickname()).get()
 
-            val = {'nickname' : match.field('nickname').value,
-                   'mail' : match.field('email').value}
+            results_json = []
 
-            results_json.append(val)
+            for match in results:
 
-        values = {
-            'results' : results_json
-        }
+                val = {'nickname' : match.field('nickname').value,
+                       'mail' : match.field('email').value}
 
-        self.response.write(json.dumps(results_json, self.response.out))
+                results_json.append(val)
+
+            values = {
+                'results' : results_json
+            }
+
+            self.response.write(json.dumps(results_json, self.response.out))
 
 #Agrega un usuario
 class AddUserHandler(webapp2.RequestHandler):
@@ -178,6 +180,7 @@ class AddUserHandler(webapp2.RequestHandler):
         self.response.write(invitedUser.mail)
 
 
+# Agrega al usuario 1 a la lista de contactos del usuario 2
 def AddContact(user1, user2):
 
     userOne = User()
@@ -273,7 +276,10 @@ class GetMessagesHandler(webapp2.RequestHandler):
 def GetMessages(sender, receiver):
 
     expr_list = [search.SortExpression(
-                    expression='timestamp', default_value='',
+                    expression='sender', default_value='',
+                    direction=search.SortExpression.DESCENDING),
+                    search.SortExpression(
+                    expression='receiver', default_value='',
                     direction=search.SortExpression.DESCENDING)]
 
     sort_opts = search.SortOptions(expressions=expr_list)
