@@ -29,7 +29,7 @@
         <h1>{{ nickname }}</h1>
         <div id="contacts" class="col-lg-3">
             <form id="search-form">
-                <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar">
+                <input id="user-search-bar" name="search-text" type="text" class="form-control" placeholder="Buscar" autocomplete="off">
             </form>
 
             <table id="search-results" class="table table-striped" style="display: none">
@@ -66,7 +66,7 @@
 
                 <input id="receiver" name="receiver" type="hidden">
                 <div class="col-lg-10">
-                    <input id="message" name="message" type="text" class="form-control">
+                    <input id="message" name="message" type="text" class="form-control" autocomplete="off">
                 </div>
                 <div class="col-lg-2">
                     <button id="send-message" class="btn btn-info" value="Enviar">Enviar</button>
@@ -205,6 +205,8 @@
             //Click en un contacto para comenzar a chatear
             $('#contacts-table').delegate('tr', 'click', function(){
 
+                $(this).find('span.badge').remove();
+
                 var receiver = $(this).children().text().trim();
 
                 $('#file-receiver').val(receiver);
@@ -214,7 +216,6 @@
                 $('#menu-opciones').prop('disabled', false);
 
                 $('#messages').empty();
-                $(this).find('span.badge').remove();
 
                 $.ajax({
                     type: "POST",
@@ -225,7 +226,7 @@
                     success: function(data){
 
                         var messages = JSON.parse(data);
-
+                
                         if(messages.length > 0) {
 
                             for(i=messages.length-1; i>=0; i--){
@@ -271,9 +272,6 @@
                     });
                 }
             });
-
-
-
         });
 
         function addContactToTable(nickname, mail) {
@@ -308,32 +306,22 @@
 
             var activeUser = $('#receiver').val();
 
-            console.log("********************************")
-            console.log("Esto es una prueba")
-
-            console.log("Usuario activo es " + activeUser);
-            console.log("Quien envió el mensaje que llega por el channel es " + data.sender);
-            console.log("********************************")
-
             if(activeUser == data.sender){
 
-                console.log("Entra al if");
                 $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
                 $("#messages").scrollTop($("#messages")[0].scrollHeight);
 
             }
             else {
 
-                console.log("Entra al else");
-
                 if($('#' + data.sender).find('span.badge').length != 0){
-                    console.log("Entra al if del else");
+
                     var count = parseInt($('#' + data.sender).find('span.badge').text());
                     count++;
                     $('#' + data.sender).find('span.badge').text(count);
                 }
                 else {
-                    console.log("Entra al else del else");
+
                     $('#' + data.sender).append($('<span>').addClass('badge').css('float','right').text('1'));
                 }
             }
