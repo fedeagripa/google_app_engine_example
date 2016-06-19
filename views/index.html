@@ -113,6 +113,8 @@
 
                             var results = JSON.parse(data);
 
+                            results = results.results
+
                             if(results.length > 0) {
 
                                 $('#search-results').show();
@@ -223,8 +225,6 @@
                     success: function(data){
 
                         var messages = JSON.parse(data);
-
-                        console.log(messages);
 
                         if(messages.length > 0) {
 

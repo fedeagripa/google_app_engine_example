@@ -41,6 +41,7 @@ from blob import UserFile
 from google.appengine.api import channel
 
 import dicttoxml
+
 # Defino el entorno de Jinja2
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader = jinja2.FileSystemLoader('views'),
@@ -162,13 +163,13 @@ class UserSearchHandler(webapp2.RequestHandler):
 
                 results_json.append(val)
 
-            xml = dicttoxml.dicttoxml(results_json)
+            # xml = dicttoxml.dicttoxml(results_json)
             values = {
-                #'results' : results_json
-                'results' : xml
+                'results' : results_json
+              #  'results' : xml
             }
 
-            self.response.write(results_json, self.response.out)
+            self.response.write(json.dumps(values, self.response.out))
 
 #Agrega un usuario
 class AddUserHandler(webapp2.RequestHandler):
