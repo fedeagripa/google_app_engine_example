@@ -319,6 +319,7 @@
 
                 console.log("Entra al if");
                 $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
+                $("#messages").scrollTop($("#messages")[0].scrollHeight);
 
             }
             else {
