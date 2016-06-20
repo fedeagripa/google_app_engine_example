@@ -114,13 +114,15 @@ def CreateUserDocument(nickname, email):
                 search.TextField(name='email', value=email)])
 
 #Crea documento para guardar usuarios
-def CreateMessageDocument(sender, receiver, message):
+def CreateMessageDocument(sender, receiver, message, type, url):
 
     return search.Document(
         fields=[search.TextField(name='sender', value=sender),
                 search.TextField(name='receiver', value=receiver),
                 search.TextField(name='message', value=message),
-                search.DateField(name='timestamp', value=datetime.now())])
+                search.DateField(name='timestamp', value=datetime.now()),
+                search.TextField(name='type', value= type),
+                search.TextField(name='url', value= url)])
 
 
 #Devuelve usuarios que coincidan con la busqueda
@@ -226,6 +228,10 @@ class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         imageUrl = images.get_serving_url(upload.key(), None, False, None, None, None)
 
+        sender = users.get_current_user().nickname()
+
+        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message,str(2),imageUrl))
+
         newMessage = {
             'type' : 2,
             'sender' : users.get_current_user().nickname(),
@@ -249,7 +255,7 @@ class SendMessageHandler(webapp2.RequestHandler):
         print "receiver: " + receiver
         print "message: " + message
 
-        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message))
+        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message,str(1),None))
 
         try:
             newMessage = {
@@ -286,9 +292,23 @@ class GetMessagesHandler(webapp2.RequestHandler):
 
         for match in messages:
 
-            val = {'sender' : match.field('sender').value,
+            type = match.field('type').value
+
+            val = None
+
+            if type == 1:
+
+                val = { 'type': type,
+                    'sender' : match.field('sender').value,
                    'receiver' : match.field('receiver').value,
                    'message' : match.field('message').value }
+
+            else:
+                val = { 'type': type,
+                    'sender' : match.field('sender').value,
+                   'receiver' : match.field('receiver').value,
+                   'message' : match.field('message').value,
+                        'url': match.field('url').value }
 
             messages_json.append(val)
 

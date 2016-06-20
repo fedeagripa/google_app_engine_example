@@ -235,12 +235,26 @@
 
                             for(i=messages.length-1; i>=0; i--){
 
-                                if(messages[i].sender == receiver){
-                                    $('#messages').append($('<p>').text(messages[i].sender + ': ' + messages[i].message));
+                                if(messages[i].type == "1") {
+
+                                    if(messages[i].sender == receiver){
+                                        $('#messages').append($('<p>').text(messages[i].sender + ': ' + messages[i].message));
+                                    }
+                                    else {
+                                        $('#messages').append($('<p>').text('Yo: ' + messages[i].message));
+                                    }
                                 }
                                 else {
-                                    $('#messages').append($('<p>').text('Yo: ' + messages[i].message));
+
+                                    if(messages[i].sender == receiver){
+                                        $('#messages').append($('<p>').text(messages[i].sender + ': ' + messages[i].message).append($('<a>').attr('href', messages[i].url).text('aqui').attr('target', '_blank')));
+                                    } else{
+                                        $('#messages').append($('<p>').text('** Has enviado una imagen **'));
+                                    }
+
                                 }
+
+
                             }
                         }
 
