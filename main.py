@@ -39,6 +39,7 @@ from user import User
 from contactList import ContactList
 from blob import UserFile
 from google.appengine.api import channel
+from google.appengine.api import images
 
 import dicttoxml
 
@@ -215,11 +216,24 @@ class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
         upload = self.get_uploads()[0]
-        print upload.key()
+        receiver = self.request.get('receiver')
         user_photo = UserFile(
             owner=users.get_current_user().nickname(),
             blob_key=upload.key())
         user_photo.put()
+
+        message = 'te he enviado una imagen, mirala '
+
+        imageUrl = images.get_serving_url(upload.key(), None, False, None, None, None)
+
+        newMessage = {
+            'type' : 2,
+            'sender' : users.get_current_user().nickname(),
+            'message' : message,
+            'url' : imageUrl
+        }
+
+        SendMessage(receiver, json.dumps(newMessage))
 
         self.response.write('okay')
 
@@ -239,6 +253,7 @@ class SendMessageHandler(webapp2.RequestHandler):
 
         try:
             newMessage = {
+                'type' : 1,
                 'sender' : sender,
                 'message' : message
             }
@@ -308,7 +323,6 @@ def GetMessages(sender, receiver):
     results = search.Index(name=MESSAGES_INDEX_NAME).search(query=query_obj)
 
     return results
-
 
 class CronJobHandler(webapp2.RequestHandler):
     def get(self):

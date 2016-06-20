@@ -76,7 +76,7 @@
 
                 </div>
                 <form id="send-file-form" method="POST" enctype="multipart/form-data" >
-                    <input id="upload" type="file" name="file" style="visibility: hidden;">
+                    <input id="upload" type="file" name="file" style="visibility: hidden;" accept="image/*">
                     <input id="file-receiver" type="hidden" name="file-receiver">
                 </form>
             </div>
@@ -156,10 +156,12 @@
             $('#upload:file').change(function(){
 
                 var upload_url = $('#send-file-form').attr('action');
+                var receiver = $('#file-receiver').val();
 
                 var formData = new FormData();
                 formData.append('image', ($('#upload'))[0].files[0]);
                 formData.append('blobkey', upload_url);
+                formData.append('receiver', receiver);
 
                 $.ajax({
                     type: "POST",
@@ -169,7 +171,9 @@
                     processData: false,
                     data: formData,
                     success: function(data) {
-                        console.log(data);
+
+                        $('#messages').append($('<p>').text('** Has enviado una imagen **'));
+
                     }
                 });
             });
@@ -226,7 +230,7 @@
                     success: function(data){
 
                         var messages = JSON.parse(data);
-                
+
                         if(messages.length > 0) {
 
                             for(i=messages.length-1; i>=0; i--){
@@ -302,27 +306,39 @@
 
         onMessage = function(m) {
 
+            console.log(m)
+
             var data = JSON.parse(m.data);
 
             var activeUser = $('#receiver').val();
 
-            if(activeUser == data.sender){
+            if(data.type == 1) {
 
-                $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
-                $("#messages").scrollTop($("#messages")[0].scrollHeight);
+                if(activeUser == data.sender){
+
+                    $('#messages').append($('<p>').text(data.sender + ': ' + data.message));
+                    $("#messages").scrollTop($("#messages")[0].scrollHeight);
+
+                }
+                else {
+
+                    IncrementNotificationCount(data.sender);
+
+                }
 
             }
             else {
 
-                if($('#' + data.sender).find('span.badge').length != 0){
+                if(activeUser == data.sender){
 
-                    var count = parseInt($('#' + data.sender).find('span.badge').text());
-                    count++;
-                    $('#' + data.sender).find('span.badge').text(count);
+                    $('#messages').append($('<p>').text(data.sender + ': ' + data.message).append($('<a>').attr('href', data.url).text('aqui').attr('target', '_blank')));
+                    $("#messages").scrollTop($("#messages")[0].scrollHeight);
+
                 }
                 else {
 
-                    $('#' + data.sender).append($('<span>').addClass('badge').css('float','right').text('1'));
+                    IncrementNotificationCount(data.sender);
+
                 }
             }
         };
@@ -344,6 +360,21 @@
         };
 
         setTimeout(initialize, 100);
+
+        function IncrementNotificationCount(sender) {
+
+            if($('#' + sender).find('span.badge').length != 0){
+
+                var count = parseInt($('#' + data.sender).find('span.badge').text());
+                count++;
+                $('#' + sender).find('span.badge').text(count);
+            }
+            else {
+
+                $('#' + sender).append($('<span>').addClass('badge').css('float','right').text('1'));
+            }
+
+        }
 
     </script>
 </body>
