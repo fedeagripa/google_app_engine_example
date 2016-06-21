@@ -258,6 +258,24 @@
                                         )
                                 );
 
+                        $('#broadcast-contacts').find('tbody')
+                                .append($('<tr>')
+                                        .addClass('clickable-row')
+                                        .append($('<td>')
+                                                .append($('<span>')
+                                                        .addClass('input-group-addon')
+                                                        .css('float','left')
+                                                        .css('background-color', 'transparent')
+                                                        .css('border', 'none')
+                                                        .append($('<input>')
+                                                                .attr('type','checkbox')
+                                                                .val(nickname)
+                                                        )
+                                                        .text(nickname)
+                                                )
+                                        )
+                                );
+
                         $('#search-results').find('tbody').empty();
                         $('#search-results').hide();
                         $('#user-search-bar').val('');

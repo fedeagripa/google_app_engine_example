@@ -52,6 +52,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 USERS_INDEX_NAME = 'users'
 MESSAGES_INDEX_NAME = 'messages'
 
+# [START handlers]
+
 ########################################################################################################################
 #                                       HANDLERS
 ########################################################################################################################
@@ -166,11 +168,14 @@ class FileUploadFormHandler(webapp2.RequestHandler):
 class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
+
         upload = self.get_uploads()[0]
         receiver = self.request.get('receiver')
+
         user_photo = UserFile(
             owner=users.get_current_user().nickname(),
             blob_key=upload.key())
+
         user_photo.put()
 
         message = 'te he enviado una imagen, mirala '
@@ -261,7 +266,9 @@ class BroadcastHandler(webapp2.RequestHandler):
 
         self.response.write('okay')
 
+# [END handlers]
 
+# [START funcaux]
 ########################################################################################################################
 #                                       FUNCIONES AUXILIARES
 ########################################################################################################################
@@ -375,6 +382,7 @@ def GetUsers(query):
 
     return results
 
+# [END funcaux]
 
 
 app = webapp2.WSGIApplication([
