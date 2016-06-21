@@ -89,7 +89,7 @@ class MainHandler(webapp2.RequestHandler):
                 registeredUser = newUser
                 registeredUserContacts = newUserContacts
 
-                #SendWelcomeEmail(loggedUser.email())
+                SendWelcomeEmail(loggedUser.email())
 
             token = channel.create_channel(loggedUser.nickname())
 
