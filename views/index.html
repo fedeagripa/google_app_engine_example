@@ -153,6 +153,12 @@
                 }
             });
 
+            $('#message').keyup(function(e){
+                if(e.keyCode == 13){
+                    $('#send-message').trigger('click');
+                }
+            });
+
             $('#user-search-bar').on('input', function(){
 
                 if($.trim($(this).val()) != '') { //controla que el input no este vacio
