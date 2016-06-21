@@ -12,6 +12,9 @@
 
     <script src='/_ah/channel/jsapi'></script>
 
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
     <style>
         .chat-window{
             border-radius: 4px;
@@ -47,16 +50,35 @@
                     {% endfor %}
                 </tbody>
             </table> <!-- / .table -->
+
+            <table id="broadcast-contacts" class="table" style="display: none;">
+                <tbody>
+                    {% for contact in contactList %}
+                        <tr class="clickable-row">
+                            <td>
+                                 <span class="input-group-addon" style="float: left; background-color: transparent; border: none;">
+                                    <input type="checkbox" value="{{ contact.username }}">
+                                     {{ contact.username }}
+                                 </span>
+
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
         <div id="chat" class="col-lg-9">
+
+            <input type="checkbox" id="broadcast-toggle" data-toggle="toggle" data-on="Broadcast" data-off="Broadcast">
+
             <div class="dropdown" style="float: right;">
                 <button class="btn btn-default dropdown-toggle" type="button" id="menu-opciones" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                     Opciones
                     <span class="caret"></span>
                 </button>
               <ul class="dropdown-menu" aria-labelledby="menu-opciones">
-                <li><a id="send-file">Enviar archivo</a></li>
+                <li><a id="send-file">Enviar imagen</a></li>
               </ul>
             </div>
             <div id="messages" class="col-lg-12 chat-window" style="">
@@ -95,9 +117,41 @@
 
     <script>
         $(document).ready(function(){
-
             $('#send-message').prop('disabled', true);
             $('#menu-opciones').prop('disabled', true);
+
+            $('#broadcast-toggle').change(function(){
+
+                if($(this).prop('checked')) { //Cuando activa el modo broadcast
+
+                    //Muestro la lista de contactos para hacer broadcast
+                    $('#contacts-table').hide();
+                    $('#broadcast-contacts').show();
+
+                    //Vacio el div que contiene los mensajes
+                    $('#messages').empty();
+
+                    //Activo el boton enviar mensaje e imagen
+                    $('#send-message').prop('disabled', false);
+                    $('#menu-opciones').prop('disabled', false);
+
+                }
+                else { //Cuando desactiva el modo broadcast
+
+                    //Muestro la lista de contactos para hacer broadcast
+                    $('#contacts-table').show();
+                    $('#broadcast-contacts').hide();
+
+                    //Deshabilito los botones para enviar mensaje o imagen.
+                    $('#send-message').prop('disabled', true);
+                    $('#menu-opciones').prop('disabled', true);
+
+                    //Descheckeo todos los checkbox
+                    $('#broadcast-contacts').find('input').each(function(){
+                        $(this).prop('checked', false);
+                    });
+                }
+            });
 
             $('#user-search-bar').on('input', function(){
 
@@ -272,22 +326,63 @@
 
                     $('#message').val('');
 
-                    $('#messages').append($('<p>').text('Yo: ' + message));
-                    $("#messages").scrollTop($("#messages")[0].scrollHeight);
+                    //IF: entra cuando no es broadcast
+                    if(!$('#broadcast-toggle').prop('checked')){
 
-                    var receiver = $('#receiver').val();
+                        $('#messages').append($('<p>').text('Yo: ' + message));
+                        $("#messages").scrollTop($("#messages")[0].scrollHeight);
 
-                    $.ajax({
-                        type: "POST",
-                        url:'/send_message',
-                        data: {
-                            receiver: receiver,
-                            message: message
-                        },
-                        success: function(data){
-                            console.log(data)
+                        var receiver = $('#receiver').val();
+
+                        $.ajax({
+                            type: "POST",
+                            url:'/send_message',
+                            data: {
+                                receiver: receiver,
+                                message: message
+                            },
+                            success: function(data){
+                                console.log(data)
+                            }
+                        });
+
+                    }
+                    //ELSE: entra cuando es broadcast
+                    else {
+                        var broadcastUsers = [];
+
+                        $('#broadcast-contacts').find('input:checked').each(function(){
+
+                            broadcastUsers.push($(this).val());
+                            $(this).prop('checked', false);
+
+                        });
+
+                        console.log(JSON.stringify(broadcastUsers));
+
+                        if(broadcastUsers.length > 0){
+
+                            $.ajax({
+                                type: "POST",
+                                url:'/send_broadcast',
+                                data: {
+                                    receivers: JSON.stringify(broadcastUsers),
+                                    message: message
+                                },
+                                success: function(data){
+                                    $('#broadcast-toggle').bootstrapToggle('off');
+
+                                    //Muestro la lista de contactos para hacer broadcast
+                                    $('#contacts-table').show();
+                                    $('#broadcast-contacts').hide();
+
+                                    //Deshabilito los botones para enviar mensaje o imagen.
+                                    $('#send-message').prop('disabled', true);
+                                    $('#menu-opciones').prop('disabled', true);
+                                }
+                            });
                         }
-                    });
+                    }
                 }
             });
         });

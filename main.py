@@ -52,6 +52,10 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 USERS_INDEX_NAME = 'users'
 MESSAGES_INDEX_NAME = 'messages'
 
+########################################################################################################################
+#                                       HANDLERS
+########################################################################################################################
+
 class MainHandler(webapp2.RequestHandler):
     def get(self):
 
@@ -102,45 +106,6 @@ class MainHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
 
 
-def SendWelcomeEmail(address):
-
-    mail.send_mail('aplicacionesescalables@gmail.com',address,'Bienvenido','Ha sido registrado en la aplicacion de chat con exito, bienvenido!')
-
-#Crea documento para guardar usuarios
-def CreateUserDocument(nickname, email):
-
-    return search.Document(
-        fields=[search.TextField(name='nickname', value=nickname),
-                search.TextField(name='email', value=email)])
-
-#Crea documento para guardar usuarios
-def CreateMessageDocument(sender, receiver, message, type, url):
-
-    return search.Document(
-        fields=[search.TextField(name='sender', value=sender),
-                search.TextField(name='receiver', value=receiver),
-                search.TextField(name='message', value=message),
-                search.DateField(name='timestamp', value=datetime.now()),
-                search.TextField(name='type', value= type),
-                search.TextField(name='url', value= url)])
-
-
-#Devuelve usuarios que coincidan con la busqueda
-def GetUsers(query):
-
-    expr_list = [search.SortExpression(
-                    expression='nickname', default_value='',
-                    direction=search.SortExpression.DESCENDING)]
-
-    sort_opts = search.SortOptions(expressions=expr_list)
-
-    query_options = search.QueryOptions(limit= 50,sort_options=sort_opts)
-
-    query_obj = search.Query(query_string=query, options=query_options)
-
-    results = search.Index(name=USERS_INDEX_NAME).search(query=query_obj)
-
-    return results
 
 
 class UserSearchHandler(webapp2.RequestHandler):
@@ -189,22 +154,6 @@ class AddUserHandler(webapp2.RequestHandler):
 
         self.response.write(invitedUser.mail)
 
-
-# Agrega al usuario 1 a la lista de contactos del usuario 2
-def AddContact(user1, user2):
-
-    userOne = User()
-    userOne= userOne.query(User.username == user1).get()
-
-    userTwoContactList = ContactList()
-    userTwoContactList = userTwoContactList.query(ContactList.owner == user2).get()
-
-    userTwoContactList.list.append(userOne)
-
-    userTwoContactList.put()
-
-
-
 #Obtiene url para subir blob y lo envia a la vista
 class FileUploadFormHandler(webapp2.RequestHandler):
 
@@ -230,16 +179,7 @@ class FileUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         sender = users.get_current_user().nickname()
 
-        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message,str(2),imageUrl))
-
-        newMessage = {
-            'type' : 2,
-            'sender' : users.get_current_user().nickname(),
-            'message' : message,
-            'url' : imageUrl
-        }
-
-        SendMessage(receiver, json.dumps(newMessage))
+        SendMessage(sender, receiver, message, 2, imageUrl)
 
         self.response.write('okay')
 
@@ -252,32 +192,11 @@ class SendMessageHandler(webapp2.RequestHandler):
         receiver = self.request.get('receiver')
         message = self.request.get('message')
 
-        print "receiver: " + receiver
-        print "message: " + message
-
-        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message,str(1),None))
-
-        try:
-            newMessage = {
-                'type' : 1,
-                'sender' : sender,
-                'message' : message
-            }
-
-            print newMessage
-
-            SendMessage(receiver, json.dumps(newMessage))
-        except:
-
-            print "excepcion"
-            pass
+        SendMessage(sender, receiver, message, 1, None)
 
         self.response.write('okay')
 
 
-def SendMessage(receiver, message):
-
-    channel.send_message(receiver, message)
 
 #Obtiene los mensajes intercambiados entre dos usuarios
 class GetMessagesHandler(webapp2.RequestHandler):
@@ -319,6 +238,101 @@ class GetMessagesHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(messages_json, self.response.out))
 
 
+
+
+class CronJobHandler(webapp2.RequestHandler):
+    def get(self):
+        print "llega al cron"
+        # photos = UserFile().query().get()
+        #
+        # print photos
+
+class BroadcastHandler(webapp2.RequestHandler):
+
+    def post(self):
+
+        message = self.request.get('message')
+        receivers = json.loads(self.request.get('receivers'))
+        sender = users.get_current_user().nickname()
+
+        for receiver in receivers:
+
+            SendMessage(sender, receiver, message, 1, None)
+
+        self.response.write('okay')
+
+
+########################################################################################################################
+#                                       FUNCIONES AUXILIARES
+########################################################################################################################
+
+# Agrega al usuario 1 a la lista de contactos del usuario 2
+def AddContact(user1, user2):
+
+    userOne = User()
+    userOne= userOne.query(User.username == user1).get()
+
+    userTwoContactList = ContactList()
+    userTwoContactList = userTwoContactList.query(ContactList.owner == user2).get()
+
+    userTwoContactList.list.append(userOne)
+
+    userTwoContactList.put()
+
+
+def SendMessage(sender, receiver, message, type, url):
+
+    try:
+
+        if type == 1:
+
+            messageTypeOne = { 'type' : 1,
+                'sender' : sender,
+                'message' : message
+            }
+
+            channel.send_message(receiver, json.dumps(messageTypeOne))
+
+        else:
+
+            messageTypeTwo = { 'type' : 2,
+                'sender' : sender,
+                'message' : message,
+                'url' : url
+            }
+
+            channel.send_message(receiver, json.dumps(messageTypeTwo))
+
+
+        search.Index(name=MESSAGES_INDEX_NAME).put(CreateMessageDocument(sender,receiver,message,str(type),url))
+
+    except:
+        pass
+
+
+def SendWelcomeEmail(address):
+
+    mail.send_mail('aplicacionesescalables@gmail.com',address,'Bienvenido','Ha sido registrado en la aplicacion de chat con exito, bienvenido!')
+
+#Crea documento para guardar usuarios
+def CreateUserDocument(nickname, email):
+
+    return search.Document(
+        fields=[search.TextField(name='nickname', value=nickname),
+                search.TextField(name='email', value=email)])
+
+#Crea documento para guardar usuarios
+def CreateMessageDocument(sender, receiver, message, type, url):
+
+    return search.Document(
+        fields=[search.TextField(name='sender', value=sender),
+                search.TextField(name='receiver', value=receiver),
+                search.TextField(name='message', value=message),
+                search.DateField(name='timestamp', value=datetime.now()),
+                search.TextField(name='type', value= type),
+                search.TextField(name='url', value= url)])
+
+
 def GetMessages(sender, receiver):
 
     expr_list = [
@@ -344,12 +358,24 @@ def GetMessages(sender, receiver):
 
     return results
 
-class CronJobHandler(webapp2.RequestHandler):
-    def get(self):
-        print "llega al cron"
-        # photos = UserFile().query().get()
-        #
-        # print photos
+#Devuelve usuarios que coincidan con la busqueda
+def GetUsers(query):
+
+    expr_list = [search.SortExpression(
+                    expression='nickname', default_value='',
+                    direction=search.SortExpression.DESCENDING)]
+
+    sort_opts = search.SortOptions(expressions=expr_list)
+
+    query_options = search.QueryOptions(limit= 50,sort_options=sort_opts)
+
+    query_obj = search.Query(query_string=query, options=query_options)
+
+    results = search.Index(name=USERS_INDEX_NAME).search(query=query_obj)
+
+    return results
+
+
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
@@ -359,5 +385,6 @@ app = webapp2.WSGIApplication([
     ('/add_contact', AddUserHandler),
     ('/send_message', SendMessageHandler),
     ('/get_messages', GetMessagesHandler),
-    ('/tasks',CronJobHandler)
+    ('/tasks',CronJobHandler),
+    ('/send_broadcast', BroadcastHandler)
 ], debug=True)
