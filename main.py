@@ -20,27 +20,29 @@ import webapp2
 import jinja2
 import json
 
-
 from datetime import datetime
 
 from google.appengine.api import users
 from google.appengine.api import mail
 from google.appengine.api import search
+from google.appengine.api import channel
+from google.appengine.api import images
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
-
-from google.appengine.api import app_identity
 from google.appengine.ext import vendor
-vendor.add('libs')
 
 #Modelos
 from user import User
 from contactList import ContactList
 from blob import UserFile
-from google.appengine.api import channel
-from google.appengine.api import images
 
+
+from googleapiclient import discovery
+from googleapiclient.http import MediaIoBaseUpload
+from oauth2client.client import GoogleCredentials
+
+vendor.add('libs')
 import dicttoxml
 
 # Defino el entorno de Jinja2
@@ -247,10 +249,23 @@ class GetMessagesHandler(webapp2.RequestHandler):
 
 class CronJobHandler(webapp2.RequestHandler):
     def get(self):
-        print "llega al cron"
-        # photos = UserFile().query().get()
-        #
-        # print photos
+        blob = blobstore.get('vtgizu6aBLyqXTP_FRzstQ==')
+
+        credentials = GoogleCredentials.get_application_default()
+
+        service = discovery.build('storage', 'v1', credentials=credentials)
+
+        media = MediaIoBaseUpload(
+            blob,
+            mimetype=blob.content_type
+        )
+
+        req = service.objects().insert(bucket='adroit-crow-130918.appspot.com', name= blob.filename, media_body=media)
+
+        resp = req.execute()
+
+        print resp['name']
+
 
 class BroadcastHandler(webapp2.RequestHandler):
 
